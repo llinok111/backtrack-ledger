@@ -24,8 +24,12 @@ const PAGE = path.join(ROOT, 'demo', 'index.html');
 const EDGE_CANDIDATES = [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
   'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
-  '/usr/bin/microsoft-edge',
+  // Chrome first on POSIX: the Ubuntu runner's microsoft-edge is a wrapper that
+  // aborts with SIGABRT inside an unprivileged container.
   '/usr/bin/google-chrome',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
+  '/usr/bin/microsoft-edge',
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ];
 
@@ -101,7 +105,8 @@ function main() {
   }
 
   let failed = 0;
-  let browserFailed = false;
+  let executed = 0;
+  let skipped = 0;
 
   for (const testCase of CASES) {
     const params = new URLSearchParams({pattern: testCase.pattern});
@@ -118,7 +123,7 @@ function main() {
       // A browser that cannot start is an environment gap. Report it plainly and
       // stop: silently passing would be worse than an honest skip.
       console.log(`SKIP  ${testCase.name}: browser did not start (${error.signal || error.message})`);
-      browserFailed = true;
+      skipped += 1;
       continue;
     }
 
@@ -133,6 +138,7 @@ function main() {
     const forbidden = testCase.forbid.filter((token) => region.includes(token));
     const ok = missing.length === 0 && forbidden.length === 0;
 
+    executed += 1;
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${testCase.name}`);
 
     if (!ok) {
@@ -147,10 +153,12 @@ function main() {
   }
 
   console.log('');
-  console.log(`${CASES.length - failed}/${CASES.length} cases passed`);
+  console.log(
+    `executed ${executed} of ${CASES.length}, skipped ${skipped}, failed ${failed}`
+  );
 
-  if (browserFailed) {
-    console.log('NOTE  one or more cases were skipped because the browser failed to start.');
+  if (skipped > 0) {
+    console.log('NOTE  skipped cases were not verified; they are not passes.');
   }
 
   if (failed > 0) {
