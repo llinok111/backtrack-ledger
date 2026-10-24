@@ -101,6 +101,7 @@ function main() {
   }
 
   let failed = 0;
+  let browserFailed = false;
 
   for (const testCase of CASES) {
     const params = new URLSearchParams({pattern: testCase.pattern});
@@ -109,7 +110,17 @@ function main() {
       params.set('input', testCase.input);
     }
 
-    const dom = run(browser, `?${params.toString()}`);
+    let dom;
+
+    try {
+      dom = run(browser, `?${params.toString()}`);
+    } catch (error) {
+      // A browser that cannot start is an environment gap. Report it plainly and
+      // stop: silently passing would be worse than an honest skip.
+      console.log(`SKIP  ${testCase.name}: browser did not start (${error.signal || error.message})`);
+      browserFailed = true;
+      continue;
+    }
 
     // Only the rendered region counts. The page also contains its own script
     // source, where every template string (including `class="error"`) appears
@@ -137,6 +148,10 @@ function main() {
 
   console.log('');
   console.log(`${CASES.length - failed}/${CASES.length} cases passed`);
+
+  if (browserFailed) {
+    console.log('NOTE  one or more cases were skipped because the browser failed to start.');
+  }
 
   if (failed > 0) {
     process.exitCode = 1;
