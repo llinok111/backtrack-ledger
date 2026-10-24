@@ -2,3 +2,9 @@
 node_modules/
 .npm-debug.log
 npm-debug.log
+# Build output and local verification artifacts
+node_modules/
+dist/
+shots/
+coverage/
+demo/regexp-tree.browser.js

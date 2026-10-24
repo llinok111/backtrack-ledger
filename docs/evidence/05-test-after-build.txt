@@ -1,0 +1,8 @@
+PASS src/parser/__tests__/parser-unicode-properties-test.js
+PASS __tests__/integration-test.js
+
+Test Suites: 42 passed, 42 total
+Tests:       398 passed, 398 total
+Snapshots:   0 total
+Time:        5.754 s, estimated 8 s
+Ran all test suites.

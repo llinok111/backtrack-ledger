@@ -1,0 +1,316 @@
+#!/usr/bin/env node
+/**
+ * backtrack-ledger CLI
+ *
+ * Answers three questions about one regular expression:
+ *   1. how many decisions does a naive backtracking machine need, on this input?
+ *   2. what input makes that number explode?
+ *   3. if the pattern is rewritten, is the language still the same?
+ *
+ * The MIT License (MIT)
+ * Copyright (c) 2017-present Dmitry Soshnikov <dmitry.soshnikov@gmail.com>
+ */
+
+'use strict';
+
+let regexpTree;
+
+try {
+  // Resolved through the package entry point, which points at `dist/`. Running
+  // against `src/` would tie the CLI to files that only exist in a checkout.
+  regexpTree = require('..');
+} catch (error) {
+  if (error.code === 'MODULE_NOT_FOUND') {
+    console.error(
+      'backtrack-ledger needs a build first. Run `npm run build` in the ' +
+        'package directory.'
+    );
+    process.exit(1);
+  }
+
+  throw error;
+}
+
+const {attack, ledger, rewrite} = regexpTree.backtrack;
+
+function usage() {
+  return [
+    'Usage:',
+    '  backtrack-ledger ledger <pattern> [input]   Cost of one match attempt',
+    '  backtrack-ledger attack <pattern>           Build and measure an attack string',
+    '  backtrack-ledger rewrite <pattern>          Propose and verify a rewrite',
+    '  backtrack-ledger check <pattern>            Attack plus rewrite',
+    '',
+    'Options:',
+    '  --json                 Machine-readable output',
+    '  --max-steps <n>        Step budget (default 2000000)',
+    '  --sizes <a,b,c>        Attack string lengths (default 4,8,12,16,20,24)',
+    '  --anchor               ledger: measure only from offset 0',
+    '  --search               attack: include start-offset retries',
+    '',
+    'Pattern must be written as a literal: /(a+)+b/ or /abc/i',
+  ].join('\n');
+}
+
+function parseArgs(argv) {
+  const args = {positional: [], json: false, anchor: false};
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === '--json') {
+      args.json = true;
+    } else if (arg === '--anchor') {
+      args.anchor = true;
+    } else if (arg === '--search') {
+      args.search = true;
+    } else if (arg === '--max-steps') {
+      args.maxSteps = Number(argv[i + 1]);
+      i += 1;
+    } else if (arg === '--sizes') {
+      args.sizes = argv[i + 1]
+        .split(',')
+        .map(Number)
+        .filter((n) => Number.isFinite(n));
+      i += 1;
+    } else if (arg === '--help' || arg === '-h') {
+      args.help = true;
+    } else {
+      args.positional.push(arg);
+    }
+  }
+
+  return args;
+}
+
+function pad(value, width) {
+  const text = String(value);
+  return text.length >= width ? text : text + ' '.repeat(width - text.length);
+}
+
+function printLedger(report) {
+  if (!report.supported) {
+    console.log(`UNSUPPORTED  ${report.pattern}`);
+    for (const issue of report.unsupported) {
+      console.log(`  - ${issue.reason} at ${issue.path}`);
+    }
+    return;
+  }
+
+  console.log(`pattern   ${report.pattern}`);
+  console.log(`input     ${JSON.stringify(report.input)}`);
+  console.log(`star      height ${report.starHeight}`);
+  console.log('');
+  console.log('theoretical (naive backtracking machine)');
+  console.log(`  steps        ${report.theoretical.steps}`);
+  console.log(`  backtracks   ${report.theoretical.backtracks}`);
+  console.log(`  max stack    ${report.theoretical.maxStack}`);
+  console.log(
+    `  truncated    ${report.theoretical.truncated || 'no'}`
+  );
+  console.log('');
+  console.log('observed (native engine)');
+  console.log(`  median       ${report.observed.medianMs} ms`);
+  console.log(`  worst        ${report.observed.worstMs} ms`);
+  console.log(`  samples      ${report.observed.samples.length}`);
+  console.log('');
+  console.log(`verdict   ${report.verdict}`);
+
+  if (report.divergence) {
+    console.log(`warning   ${report.divergence}`);
+  }
+
+  if (report.engineNote) {
+    console.log(`note      ${report.engineNote}`);
+  }
+
+  for (const limitation of report.limitations) {
+    console.log(`limit     ${limitation}`);
+  }
+}
+
+function printAttack(report) {
+  if (!report.supported) {
+    console.log(`UNSUPPORTED  ${report.pattern}`);
+    for (const issue of report.unsupported) {
+      console.log(`  - ${issue.reason} at ${issue.path}`);
+    }
+    return;
+  }
+
+  console.log(`pattern   ${report.pattern}`);
+  console.log(`pump      ${JSON.stringify(report.pump)} (${report.pumpSource})`);
+  console.log(`suffix    ${JSON.stringify(report.suffix)}`);
+  console.log('');
+  console.log(`${pad('n', 4)}${pad('input', 20)}${pad('steps', 12)}${pad('backtracks', 12)}${pad('stack', 8)}ms`);
+
+  for (const point of report.points) {
+    const display =
+      point.input.length > 16 ? `${point.input.slice(0, 15)}…` : point.input;
+    console.log(
+      pad(point.n, 4) +
+        pad(JSON.stringify(display), 20) +
+        pad(point.steps + (point.truncated ? '*' : ''), 12) +
+        pad(point.backtracks, 12) +
+        pad(point.maxStack, 8) +
+        point.ms
+    );
+  }
+
+  console.log('');
+  console.log(`growth    ${report.growth.verdict}`);
+  console.log(`          ${report.growth.note}`);
+}
+
+function printRewrite(report) {
+  if (!report.supported) {
+    console.log(`UNSUPPORTED  ${report.pattern}`);
+    for (const issue of report.unsupported) {
+      console.log(`  - ${issue.reason} at ${issue.path}`);
+    }
+    return;
+  }
+
+  console.log(`pattern   ${report.pattern}`);
+
+  if (report.candidates.length === 0) {
+    console.log(`note      ${report.note}`);
+    return;
+  }
+
+  for (const candidate of report.candidates) {
+    console.log('');
+    console.log(`rule      ${candidate.rule}`);
+    console.log(`before    ${candidate.originalFragment}`);
+    console.log(`after     ${candidate.rewritten}`);
+    console.log(
+      `steps     ${candidate.cost.beforeSteps} -> ${candidate.cost.afterSteps}` +
+        (candidate.cost.ratio ? `  (${candidate.cost.ratio}x fewer)` : '')
+    );
+    console.log(`check     ${candidate.verification.statement}`);
+    console.log(`complete  ${candidate.verification.complete}`);
+    console.log(`caveat    ${candidate.caveat}`);
+
+    if (candidate.verification.differences.length > 0) {
+      console.log('COUNTEREXAMPLES');
+      for (const difference of candidate.verification.differences) {
+        console.log(
+          `  input ${JSON.stringify(difference.input)}: ` +
+            `original=${difference.original} rewritten=${difference.rewritten}`
+        );
+      }
+    }
+  }
+}
+
+function normalizePattern(raw) {
+  if (/^\/.*\/[a-z]*$/.test(raw)) {
+    return raw;
+  }
+
+  // A bare source (`(a+)+b`) is accepted because POSIX shells rewrite a leading
+  // slash into a filesystem path before the CLI ever sees it. Detecting the
+  // literal form is impossible at that point, so the bare form is the reliable
+  // one to document.
+  return `/${raw}/`;
+}
+
+function main() {
+  const argv = process.argv.slice(2);
+  const args = parseArgs(argv);
+
+  if (args.help || args.positional.length === 0) {
+    console.log(usage());
+    process.exitCode = args.help ? 0 : 1;
+    return;
+  }
+
+  const [command, rawPattern, input] = args.positional;
+
+  if (!rawPattern) {
+    console.error('Missing pattern.');
+    process.exitCode = 2;
+    return;
+  }
+
+  const pattern = normalizePattern(rawPattern);
+
+  // `attack` measures one attempt by default (the algorithmic cost of the
+  // pattern); `ledger` mirrors `RegExp#exec` and scans start offsets unless
+  // asked to anchor. The two defaults differ on purpose.
+  const options = {maxSteps: args.maxSteps, sizes: args.sizes};
+
+  if (command === 'ledger') {
+    options.anchorAtStart = args.anchor;
+  } else if (command === 'attack' || command === 'check') {
+    options.anchorAtStart = !args.search;
+  }
+
+  if (command === 'ledger') {
+    let subject = input;
+
+    // An empty string says almost nothing about a pattern; without an explicit
+    // input, measure the constructed adversarial one instead.
+    if (subject == null) {
+      const probe = attack(pattern, {sizes: [12], maxSteps: options.maxSteps});
+      subject = probe.points ? probe.points[0].input : '';
+    }
+
+    const report = ledger(pattern, subject, options);
+
+    if (args.json) {
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      printLedger(report);
+    }
+
+    return;
+  }
+
+  if (command === 'attack') {
+    const report = attack(pattern, options);
+
+    if (args.json) {
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      printAttack(report);
+    }
+
+    return;
+  }
+
+  if (command === 'rewrite') {
+    const report = rewrite(pattern, options);
+
+    if (args.json) {
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      printRewrite(report);
+    }
+
+    return;
+  }
+
+  if (command === 'check') {
+    const attackReport = attack(pattern, options);
+    const rewriteReport = rewrite(pattern, options);
+
+    if (args.json) {
+      console.log(
+        JSON.stringify({attack: attackReport, rewrite: rewriteReport}, null, 2)
+      );
+      return;
+    }
+
+    printAttack(attackReport);
+    console.log('\n' + '-'.repeat(60) + '\n');
+    printRewrite(rewriteReport);
+    return;
+  }
+
+  console.error(`Unknown command: ${command}\n`);
+  console.log(usage());
+  process.exitCode = 2;
+}
+
+main();

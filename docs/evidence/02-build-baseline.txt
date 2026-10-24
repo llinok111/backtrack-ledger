@@ -1,0 +1,31 @@
+
+> regexp-tree@0.1.27 build
+> node ./scripts/build.js
+
+Building...
+
+[1/3] Generating parser module...
+
+
+Parsing mode: LALR1_BY_SLR(1).
+
+✓ Successfully generated: src/parser/generated/regexp-tree.js 
+
+[2/3] Installing Git hooks...
+
+  - pre-commit: .git/hooks/pre-commit
+unlink: cannot unlink '.git/hooks/pre-commit': No such file or directory
+ln: EPERM: operation not permitted, symlink '../../scripts/git-pre-commit' -> 'E:/WorkBuddy-Work/workbuddy-github-2/backtrack-ledger/.git/hooks/pre-commit'
+  - pre-push:   .git/hooks/pre-push
+
+unlink: cannot unlink '.git/hooks/pre-push': No such file or directory
+ln: EPERM: operation not permitted, symlink '../../scripts/git-pre-push' -> 'E:/WorkBuddy-Work/workbuddy-github-2/backtrack-ledger/.git/hooks/pre-push'
+[3/3] Transpiling JS code...
+
+'NODE_ENV' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���
+���������ļ���
+
+All done.
+
+EXIT_CODE=0
+ls: cannot access 'dist': No such file or directory

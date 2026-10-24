@@ -1,0 +1,13 @@
+    > 8 | module.exports = require('./dist/regexp-tree');
+        |                  ^
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:487:11)
+      at Object.require (index.js:8:18)
+
+
+Test Suites: 1 failed, 41 passed, 42 total
+Tests:       389 passed, 389 total
+Snapshots:   0 total
+Time:        8.535 s
+Ran all test suites.
+EXIT_CODE=0

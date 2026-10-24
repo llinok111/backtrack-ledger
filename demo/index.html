@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backtrack Ledger · 正则回溯账本</title>
+<style>
+  :root {
+    --bg: #1A1A1A;
+    --panel: #000000;
+    --line: #333333;
+    --muted: #999999;
+    --text: #F0F0F0;
+    --dim: #CCCCCC;
+    --danger: #DC143C;
+    --safe: #3CB371;
+    --warn: #FFD700;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  header { margin-bottom: 32px; }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 15px;
+    padding: 11px 12px;
+    outline: none;
+  }
+
+  input[type="text"]:focus { border-color: var(--muted); }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 720px) {
+    .row { grid-template-columns: 1fr; }
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 6px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+
+  button {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 9px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  button:hover { border-color: var(--muted); }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+  }
+
+  .badge.exponential, .badge.catastrophic { color: var(--danger); }
+  .badge.polynomial, .badge.unbounded { color: var(--warn); }
+  .badge.linear, .badge.constant, .badge.negligible { color: var(--safe); }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  @media (max-width: 720px) {
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .metric {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  .metric .k {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .metric .v {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 22px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+  }
+
+  th, td {
+    text-align: right;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th:first-child, td:first-child { text-align: left; }
+
+  th {
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  td { color: var(--dim); font-variant-numeric: tabular-nums; }
+
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 13px;
+  }
+
+  .error {
+    border-left: 3px solid var(--danger);
+    padding-left: 14px;
+    color: var(--dim);
+    font-size: 14px;
+  }
+
+  .note {
+    border-left: 3px solid var(--warn);
+    padding-left: 14px;
+    color: var(--dim);
+    font-size: 13px;
+  }
+
+  .chart { margin-top: 8px; }
+
+  .verdict-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .rewrite {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 15px;
+    margin: 10px 0;
+  }
+
+  .arrow { color: var(--muted); margin: 0 10px; }
+
+  footer {
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    margin-top: 40px;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Backtrack Ledger · 正则回溯账本</h1>
+    <p class="sub">测量一条正则真正做了多少决定，并给出可验证的改写。所有计算在浏览器本地完成。</p>
+  </header>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label for="pattern">正则</label>
+        <input id="pattern" type="text" value="(a+)+b" spellcheck="false" autocomplete="off">
+        <div class="hint">不带斜杠也可以；需要 flag 时写 /abc/i</div>
+      </div>
+      <div>
+        <label for="input">输入串（可留空，自动构造攻击串）</label>
+        <input id="input" type="text" value="" spellcheck="false" autocomplete="off" placeholder="留空 = 自动构造">
+      </div>
+    </div>
+  </div>
+
+  <div id="out"></div>
+
+  <footer>
+    <strong>能力边界</strong>：本引擎拒绝 lookahead / lookbehind / 反向引用 / Unicode property / <code>u</code>、<code>v</code> flag，
+    因为它们无法在纯回溯机上精确复现。遇到这些构造会直接报错，而不是猜一个结果。<br>
+    <strong>两个数字不同源</strong>：<code>steps</code> 来自本项目的朴素回溯机，<code>原生中位数</code> 来自 V8。
+    两者可能背离 —— V8 对某些空循环有专门优化，此时 step 数高但原生很快。背离不代表任何一方出错。
+  </footer>
+</div>
+
+<script src="./regexp-tree.browser.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var rt = window.regexpTree;
+  var out = document.getElementById('out');
+  var patternInput = document.getElementById('pattern');
+  var inputField = document.getElementById('input');
+
+  function esc(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function fmt(number) {
+    if (number == null) return '—';
+    return number.toLocaleString('en-US');
+  }
+
+  function normalize(raw) {
+    var value = raw.trim();
+    if (!value) return '';
+    return /^\/.*\/[a-z]*$/.test(value) ? value : '/' + value + '/';
+  }
+
+  function badge(word) {
+    return '<span class="badge ' + esc(word) + '">' + esc(word) + '</span>';
+  }
+
+  function renderError(message) {
+    out.innerHTML =
+      '<div class="panel"><div class="error">' + esc(message) + '</div></div>';
+  }
+
+  /**
+   * Log-scaled line chart. A log axis is the only way to keep a 2^n curve and a
+   * linear one legible in the same 300px box.
+   */
+  function chart(points) {
+    var width = 940;
+    var height = 260;
+    var padL = 64;
+    var padR = 20;
+    var padT = 18;
+    var padB = 36;
+
+    var usable = points.filter(function (point) {
+      return point.steps > 0;
+    });
+
+    if (usable.length < 2) {
+      return '<div class="muted small">点数不足，无法绘制曲线。</div>';
+    }
+
+    var xs = usable.map(function (p) { return p.n; });
+    var ys = usable.map(function (p) { return Math.log10(p.steps); });
+
+    var minX = Math.min.apply(null, xs);
+    var maxX = Math.max.apply(null, xs);
+    var minY = Math.floor(Math.min.apply(null, ys));
+    var maxY = Math.ceil(Math.max.apply(null, ys));
+
+    if (maxX === minX) maxX = minX + 1;
+    if (maxY === minY) maxY = minY + 1;
+
+    function px(n) {
+      return padL + ((n - minX) / (maxX - minX)) * (width - padL - padR);
+    }
+
+    function py(v) {
+      return height - padB - ((v - minY) / (maxY - minY)) * (height - padT - padB);
+    }
+
+    var path = usable
+      .map(function (point, index) {
+        return (index === 0 ? 'M' : 'L') + px(point.n).toFixed(1) + ' ' + py(Math.log10(point.steps)).toFixed(1);
+      })
+      .join(' ');
+
+    var dots = usable
+      .map(function (point) {
+        return '<circle cx="' + px(point.n).toFixed(1) + '" cy="' + py(Math.log10(point.steps)).toFixed(1) +
+          '" r="3" fill="#DC143C"></circle>';
+      })
+      .join('');
+
+    var grid = '';
+    for (var v = minY; v <= maxY; v += 1) {
+      var y = py(v);
+      grid += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (width - padR) + '" y2="' + y.toFixed(1) +
+        '" stroke="#333333" stroke-width="1"></line>';
+      grid += '<text x="' + (padL - 10) + '" y="' + (y + 4).toFixed(1) +
+        '" fill="#999999" font-size="11" text-anchor="end" font-family="monospace">1e' + v + '</text>';
+    }
+
+    var xLabels = usable
+      .map(function (point) {
+        return '<text x="' + px(point.n).toFixed(1) + '" y="' + (height - padB + 18) +
+          '" fill="#999999" font-size="11" text-anchor="middle" font-family="monospace">' + point.n + '</text>';
+      })
+      .join('');
+
+    return '<svg class="chart" viewBox="0 0 ' + width + ' ' + height + '" width="100%" height="' + height +
+      '" role="img" aria-label="steps 随输入长度变化">' +
+      grid +
+      '<line x1="' + padL + '" y1="' + (height - padB) + '" x2="' + (width - padR) + '" y2="' + (height - padB) +
+      '" stroke="#666666"></line>' +
+      '<path d="' + path + '" fill="none" stroke="#DC143C" stroke-width="2"></path>' +
+      dots + xLabels +
+      '<text x="' + (padL - 10) + '" y="' + (padT - 4) + '" fill="#999999" font-size="11" text-anchor="end" font-family="monospace">steps</text>' +
+      '<text x="' + (width - padR) + '" y="' + (height - 6) + '" fill="#999999" font-size="11" text-anchor="end">输入长度 n</text>' +
+      '</svg>';
+  }
+
+  function render() {
+    var pattern = normalize(patternInput.value);
+
+    if (!pattern) {
+      renderError('请输入一条正则。');
+      return;
+    }
+
+    var attackReport;
+    var rewriteReport;
+
+    try {
+      attackReport = rt.backtrack.attack(pattern, {sizes: [4, 8, 12, 16, 20]});
+    } catch (error) {
+      renderError('解析失败：' + error.message);
+      return;
+    }
+
+    if (!attackReport.supported) {
+      var issues = attackReport.unsupported
+        .map(function (issue) { return '• ' + issue.reason + '  @ ' + issue.path; })
+        .join('<br>');
+      out.innerHTML =
+        '<div class="panel"><div class="error"><strong>超出支持范围</strong><br><br>' + issues +
+        '<br><br><span class="muted">这些构造无法在纯回溯机上精确复现，因此拒绝分析，而不是给出可能错误的结果。</span></div></div>';
+      return;
+    }
+
+    try {
+      rewriteReport = rt.backtrack.rewrite(pattern, {maxLength: 6, maxSteps: 200000});
+    } catch (error) {
+      rewriteReport = null;
+    }
+
+    var html = '';
+
+    // Verdict
+    html += '<div class="panel">';
+    html += '<div class="verdict-line">' + badge(attackReport.growth.verdict);
+    html += '<span class="small muted">' + esc(attackReport.growth.note) + '</span></div>';
+    html += '<div class="muted small" style="margin-top:10px">泵字符 <code>' + esc(JSON.stringify(attackReport.pump)) +
+      '</code>（' + esc(attackReport.pumpSource) + '），失败后缀 <code>' + esc(JSON.stringify(attackReport.suffix)) +
+      '</code>。攻击串 = 泵字符 × n + 后缀。</div>';
+    html += '</div>';
+
+    // Metrics from the worst point
+    var worst = attackReport.worst;
+    html += '<div class="metrics">';
+    html += '<div class="metric"><div class="k">steps @ n=' + worst.n + '</div><div class="v">' + fmt(worst.steps) +
+      (worst.truncated ? '*' : '') + '</div></div>';
+    html += '<div class="metric"><div class="k">backtracks</div><div class="v">' + fmt(worst.backtracks) + '</div></div>';
+    html += '<div class="metric"><div class="k">max stack</div><div class="v">' + fmt(worst.maxStack) + '</div></div>';
+    html += '<div class="metric"><div class="k">star height</div><div class="v">' + attackReport.starHeight + '</div></div>';
+    html += '</div>';
+
+    // Chart
+    html += '<div class="panel"><label>步数随输入长度（纵轴对数刻度）</label>';
+    html += chart(attackReport.points);
+    html += '</div>';
+
+    // Table
+    html += '<div class="panel"><label>测量点</label><table><thead><tr>' +
+      '<th>n</th><th>steps</th><th>backtracks</th><th>stack</th><th>vm ms</th></tr></thead><tbody>';
+    attackReport.points.forEach(function (point) {
+      html += '<tr><td>' + point.n + '</td><td>' + fmt(point.steps) + (point.truncated ? '*' : '') +
+        '</td><td>' + fmt(point.backtracks) + '</td><td>' + fmt(point.maxStack) + '</td><td>' + point.ms + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div class="muted small" style="margin-top:10px">* 命中步数预算，曲线在这一点被截断。</div>';
+    html += '</div>';
+
+    // Rewrite
+    if (rewriteReport && rewriteReport.candidates && rewriteReport.candidates.length > 0) {
+      rewriteReport.candidates.forEach(function (candidate) {
+        html += '<div class="panel"><label>改写候选 · ' + esc(candidate.rule) + '</label>';
+        html += '<div class="rewrite">' + esc(candidate.originalFragment) +
+          '<span class="arrow">→</span>' + esc(candidate.rewritten) + '</div>';
+        html += '<table><tbody>';
+        html += '<tr><td style="text-align:left;color:#999">steps 合计</td><td>' +
+          fmt(candidate.cost.beforeSteps) + ' → ' + fmt(candidate.cost.afterSteps) +
+          (candidate.cost.ratio ? '（' + candidate.cost.ratio + '×）' : '') + '</td></tr>';
+        html += '<tr><td style="text-align:left;color:#999">等价检查</td><td>' +
+          fmt(candidate.verification.tested) + ' 个样本，' + candidate.verification.differences.length + ' 处差异</td></tr>';
+        html += '</tbody></table>';
+        html += '<div class="muted small" style="margin-top:10px">' + esc(candidate.verification.statement) + '</div>';
+        html += '<div class="note" style="margin-top:10px">' + esc(candidate.caveat) + '</div>';
+
+        if (candidate.verification.differences.length > 0) {
+          html += '<div class="error" style="margin-top:10px">发现反例，此改写不可用：';
+          candidate.verification.differences.slice(0, 5).forEach(function (difference) {
+            html += '<br>输入 ' + esc(JSON.stringify(difference.input)) + '：原 ' + difference.original +
+              ' / 新 ' + difference.rewritten;
+          });
+          html += '</div>';
+        }
+
+        html += '</div>';
+      });
+    } else if (rewriteReport) {
+      html += '<div class="panel"><label>改写候选</label><div class="muted small">' +
+        esc(rewriteReport.note) + '</div></div>';
+    }
+
+    // Custom input, when provided
+    var custom = inputField.value.trim();
+    if (custom) {
+      try {
+        var customReport = rt.backtrack.ledger(pattern, custom, {maxSteps: 500000, runs: 5});
+        if (customReport.supported) {
+          html += '<div class="panel"><label>自定义输入</label><table><tbody>';
+          html += '<tr><td style="text-align:left;color:#999">输入</td><td><code>' +
+            esc(JSON.stringify(custom)) + '</code></td></tr>';
+          html += '<tr><td style="text-align:left;color:#999">匹配</td><td>' +
+            String(customReport.theoretical.matched) + '</td></tr>';
+          html += '<tr><td style="text-align:left;color:#999">steps</td><td>' +
+            fmt(customReport.theoretical.steps) + (customReport.theoretical.truncated ? '（截断）' : '') + '</td></tr>';
+          html += '<tr><td style="text-align:left;color:#999">backtracks</td><td>' +
+            fmt(customReport.theoretical.backtracks) + '</td></tr>';
+          html += '<tr><td style="text-align:left;color:#999">原生中位数</td><td>' +
+            customReport.observed.medianMs + ' ms</td></tr>';
+          html += '<tr><td style="text-align:left;color:#999">判定</td><td>' + badge(customReport.verdict) + '</td></tr>';
+          html += '</tbody></table></div>';
+        } else {
+          html += '<div class="panel"><div class="error">该正则超出支持范围，无法分析自定义输入。</div></div>';
+        }
+      } catch (error) {
+        html += '<div class="panel"><div class="error">自定义输入分析失败：' + esc(error.message) + '</div></div>';
+      }
+    }
+
+    // Native comparison for the worst point
+    try {
+      var nativeReport = rt.backtrack.ledger(pattern, worst.input, {maxSteps: 200000, runs: 5});
+      if (nativeReport.supported) {
+        html += '<div class="panel"><label>原生引擎对照（同一输入）</label><table><tbody>';
+        html += '<tr><td style="text-align:left;color:#999">中位耗时</td><td>' + nativeReport.observed.medianMs + ' ms</td></tr>';
+        html += '<tr><td style="text-align:left;color:#999">最慢一次</td><td>' + nativeReport.observed.worstMs + ' ms</td></tr>';
+        html += '<tr><td style="text-align:left;color:#999">是否匹配</td><td>' + String(nativeReport.observed.matched) + '</td></tr>';
+        html += '<tr><td style="text-align:left;color:#999">理论 steps</td><td>' + fmt(nativeReport.theoretical.steps) +
+          (nativeReport.theoretical.truncated ? '（截断）' : '') + '</td></tr>';
+        html += '</tbody></table>';
+        if (nativeReport.divergence) {
+          html += '<div class="note" style="margin-top:10px">' + esc(nativeReport.divergence) + '</div>';
+        }
+        html += '</div>';
+      }
+    } catch (error) {
+      // The comparison is supplementary; a failure here must not blank the page.
+    }
+
+    out.innerHTML = html;
+  }
+
+  var timer = null;
+
+  // A shareable link is also a reproducible test case:
+  //   index.html?pattern=(a%2B)%2Bb
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var shared = params.get('pattern');
+
+    if (shared) {
+      patternInput.value = shared;
+    }
+
+    var sharedInput = params.get('input');
+
+    if (sharedInput) {
+      inputField.value = sharedInput;
+    }
+  } catch (error) {
+    // Older browsers without URLSearchParams simply keep the default pattern.
+  }
+
+  function schedule() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(render, 220);
+  }
+
+  patternInput.addEventListener('input', schedule);
+  inputField.addEventListener('input', function () {
+    // The explicit input field is only used by the ledger comparison; the charts
+    // always use the constructed attack string so the curve stays comparable.
+    schedule();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

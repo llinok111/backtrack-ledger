@@ -1,0 +1,49 @@
+backtrack-ledger
+===============
+
+This distribution is a derivative work of regexp-tree.
+
+Upstream
+--------
+regexp-tree
+https://github.com/DmitrySoshnikov/regexp-tree
+Copyright (c) 2017 Dmitry Soshnikov
+Licensed under the MIT License (see LICENSE).
+
+The parser, AST specification, generator, traversal API, transform pipeline,
+optimizer and the finite-automaton interpreter are upstream code, used here
+without modification except where noted below.
+
+Modifications in this distribution
+----------------------------------
+1. `src/backtrack/` is new. It contains a backtracking virtual machine with an
+   explicit choice stack, a compiler from the upstream AST to that machine's
+   instruction set, capability analysis, attack-string construction, a cost
+   ledger, and rewrite verification. Copyright (c) 2026 backtrack-ledger
+   contributors, MIT.
+
+2. `src/regexp-tree.js` gains one additive export, `backtrack`. No existing
+   export changed.
+
+3. `src/backtrack/__tests__/backtrack-test.js` is new (61 tests). The upstream
+   test suite (398 tests) is unmodified.
+
+4. `scripts/build.js` is modified to fix a cross-platform defect: the previous
+   implementation invoked `NODE_ENV=production "node_modules/.bin/babel"`,
+   which cannot run under cmd.exe, and exited 0 without producing `dist/`.
+   The fix passes NODE_ENV through the child environment, tolerates git-hook
+   symlink failure (which requires elevation on Windows), and fails loudly when
+   `dist/regexp-tree.js` is absent. Reported upstream as issue #134.
+
+5. `scripts/bundle-demo.js`, `scripts/verify-demo.js`, `scripts/png-probe.js`
+   and `demo/` are new: a dependency-free browser bundle of the above, a
+   headless DOM acceptance harness, and a PNG statistics probe used to verify
+   that rendered pages are not blank.
+
+6. `README.md` was replaced with documentation for this derivative work. The
+   upstream README is preserved verbatim as `README.upstream.md`.
+
+7. `bin/backtrack-ledger` is new. `bin/regexp-tree` is unchanged.
+
+No upstream file was relicensed. The MIT terms in LICENSE apply to the whole
+distribution.

@@ -1,0 +1,42 @@
+name: test
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    name: node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npx jest
+
+      - name: Smoke test the build artifacts
+        run: npm run smoke
+
+      - name: Bundle the workbench
+        run: npm run demo:bundle
+
+      - name: Verify the workbench renders
+        if: runner.os == 'Linux'
+        run: npm run verify:demo

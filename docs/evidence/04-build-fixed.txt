@@ -1,0 +1,73 @@
+Building...
+
+[1/3] Generating parser module...
+
+
+Parsing mode: LALR1_BY_SLR(1).
+
+✓ Successfully generated: src/parser/generated/regexp-tree.js 
+
+[2/3] Installing Git hooks...
+
+  - pre-commit: .git/hooks/pre-commit
+ln: EPERM: operation not permitted, symlink '../../scripts/git-pre-commit' -> 'E:/WorkBuddy-Work/workbuddy-github-2/backtrack-ledger/.git/hooks/pre-commit'
+    skipped: symlink not permitted (ln: EPERM: operation not permitted, symlink '../../scripts/git-pre-commit' -> 'E:/WorkBuddy-Work/workbuddy-github-2/backtrack-ledger/.git/hooks/pre-commit')
+  - pre-push: .git/hooks/pre-push
+ln: EPERM: operation not permitted, symlink '../../scripts/git-pre-push' -> 'E:/WorkBuddy-Work/workbuddy-github-2/backtrack-ledger/.git/hooks/pre-push'
+    skipped: symlink not permitted (ln: EPERM: operation not permitted, symlink '../../scripts/git-pre-push' -> 'E:/WorkBuddy-Work/workbuddy-github-2/backtrack-ledger/.git/hooks/pre-push')
+
+[3/3] Transpiling JS code...
+
+src\bin\regexp-tree.js -> dist\bin\regexp-tree.js
+src\compat-transpiler\index.js -> dist\compat-transpiler\index.js
+src\compat-transpiler\runtime\index.js -> dist\compat-transpiler\runtime\index.js
+src\compat-transpiler\transforms\compat-dotall-s-transform.js -> dist\compat-transpiler\transforms\compat-dotall-s-transform.js
+src\compat-transpiler\transforms\compat-named-capturing-groups-transform.js -> dist\compat-transpiler\transforms\compat-named-capturing-groups-transform.js
+src\compat-transpiler\transforms\compat-x-flag-transform.js -> dist\compat-transpiler\transforms\compat-x-flag-transform.js
+src\compat-transpiler\transforms\index.js -> dist\compat-transpiler\transforms\index.js
+src\generator\index.js -> dist\generator\index.js
+src\interpreter\finite-automaton\dfa\dfa-minimizer.js -> dist\interpreter\finite-automaton\dfa\dfa-minimizer.js
+src\interpreter\finite-automaton\dfa\dfa.js -> dist\interpreter\finite-automaton\dfa\dfa.js
+src\interpreter\finite-automaton\index.js -> dist\interpreter\finite-automaton\index.js
+src\interpreter\finite-automaton\nfa\builders.js -> dist\interpreter\finite-automaton\nfa\builders.js
+src\interpreter\finite-automaton\nfa\nfa-from-regexp.js -> dist\interpreter\finite-automaton\nfa\nfa-from-regexp.js
+src\interpreter\finite-automaton\nfa\nfa-state.js -> dist\interpreter\finite-automaton\nfa\nfa-state.js
+src\interpreter\finite-automaton\nfa\nfa.js -> dist\interpreter\finite-automaton\nfa\nfa.js
+src\interpreter\finite-automaton\special-symbols.js -> dist\interpreter\finite-automaton\special-symbols.js
+src\interpreter\finite-automaton\state.js -> dist\interpreter\finite-automaton\state.js
+src\optimizer\index.js -> dist\optimizer\index.js
+src\optimizer\transforms\char-case-insensitive-lowercase-transform.js -> dist\optimizer\transforms\char-case-insensitive-lowercase-transform.js
+src\optimizer\transforms\char-class-classranges-merge-transform.js -> dist\optimizer\transforms\char-class-classranges-merge-transform.js
+src\optimizer\transforms\char-class-classranges-to-chars-transform.js -> dist\optimizer\transforms\char-class-classranges-to-chars-transform.js
+src\optimizer\transforms\char-class-remove-duplicates-transform.js -> dist\optimizer\transforms\char-class-remove-duplicates-transform.js
+src\optimizer\transforms\char-class-to-meta-transform.js -> dist\optimizer\transforms\char-class-to-meta-transform.js
+src\optimizer\transforms\char-class-to-single-char-transform.js -> dist\optimizer\transforms\char-class-to-single-char-transform.js
+src\optimizer\transforms\char-code-to-simple-char-transform.js -> dist\optimizer\transforms\char-code-to-simple-char-transform.js
+src\optimizer\transforms\char-escape-unescape-transform.js -> dist\optimizer\transforms\char-escape-unescape-transform.js
+src\optimizer\transforms\char-surrogate-pair-to-single-unicode-transform.js -> dist\optimizer\transforms\char-surrogate-pair-to-single-unicode-transform.js
+src\optimizer\transforms\combine-repeating-patterns-transform.js -> dist\optimizer\transforms\combine-repeating-patterns-transform.js
+src\optimizer\transforms\disjunction-remove-duplicates-transform.js -> dist\optimizer\transforms\disjunction-remove-duplicates-transform.js
+src\optimizer\transforms\group-single-chars-to-char-class.js -> dist\optimizer\transforms\group-single-chars-to-char-class.js
+src\optimizer\transforms\index.js -> dist\optimizer\transforms\index.js
+src\optimizer\transforms\quantifier-range-to-symbol-transform.js -> dist\optimizer\transforms\quantifier-range-to-symbol-transform.js
+src\optimizer\transforms\quantifiers-merge-transform.js -> dist\optimizer\transforms\quantifiers-merge-transform.js
+src\optimizer\transforms\remove-empty-group-transform.js -> dist\optimizer\transforms\remove-empty-group-transform.js
+src\optimizer\transforms\ungroup-transform.js -> dist\optimizer\transforms\ungroup-transform.js
+src\parser\generated\regexp-tree.js -> dist\parser\generated\regexp-tree.js
+src\parser\index.js -> dist\parser\index.js
+src\parser\unicode\parser-unicode-properties.js -> dist\parser\unicode\parser-unicode-properties.js
+src\regexp-tree.js -> dist\regexp-tree.js
+src\transform\index.js -> dist\transform\index.js
+src\transform\utils.js -> dist\transform\utils.js
+src\traverse\index.js -> dist\traverse\index.js
+src\traverse\node-path.js -> dist\traverse\node-path.js
+src\utils\clone.js -> dist\utils\clone.js
+
+All done.
+
+EXIT_CODE=0
+bin
+compat-transpiler
+generator
+interpreter
+optimizer

@@ -1,0 +1,54 @@
+name: pages
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Bundle the workbench
+        run: node scripts/bundle-demo.js demo/regexp-tree.browser.js
+
+      - name: Verify the bundle loads and analyses a pattern
+        run: |
+          node -e "
+          global.window = {};
+          require('./demo/regexp-tree.browser.js');
+          const rt = global.window.regexpTree;
+          const report = rt.backtrack.attack('/(a+)+b/', {sizes: [4, 8]});
+          if (report.growth.verdict !== 'exponential') {
+            console.error('unexpected verdict: ' + report.growth.verdict);
+            process.exit(1);
+          }
+          console.log('bundle ok: ' + report.points.map(p => p.steps).join(','));
+          "
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -12,6 +12,7 @@ const parser = require('./parser');
 const transform = require('./transform');
 const traverse = require('./traverse');
 const fa = require('./interpreter/finite-automaton');
+const backtrack = require('./backtrack');
 
 const {RegExpTree} = require('./compat-transpiler/runtime');
 
@@ -28,6 +29,13 @@ const regexpTree = {
    * Expose finite-automaton module.
    */
   fa,
+
+  /**
+   * Backtracking cost ledger: a second interpreter that counts the decisions a
+   * naive backtracking machine makes, constructs attack strings, and verifies
+   * rewrite candidates. Purely additive; nothing above changes.
+   */
+  backtrack,
 
   /**
    * `TransformResult` exposed.

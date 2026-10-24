@@ -1,30 +1,48 @@
 {
-  "name": "regexp-tree",
-  "version": "0.1.27",
+  "name": "backtrack-ledger",
+  "version": "1.0.0",
   "license": "MIT",
-  "description": "Regular Expressions parser in JavaScript",
-  "repository": "DmitrySoshnikov/regexp-tree",
-  "homepage": "https://github.com/DmitrySoshnikov/regexp-tree",
-  "bugs": "https://github.com/DmitrySoshnikov/regexp-tree/issues",
+  "description": "Backtracking cost ledger for JavaScript regular expressions: measured step counts, attack-string construction, and bounded verification of rewrites. Built on regexp-tree.",
+  "repository": "llinok111/backtrack-ledger",
+  "homepage": "https://github.com/llinok111/backtrack-ledger",
+  "bugs": "https://github.com/llinok111/backtrack-ledger/issues",
   "scripts": {
     "build": "node ./scripts/build.js",
     "watch": "node ./scripts/build.js --watch",
+    "pretest": "node ./scripts/build.js",
     "test": "jest",
-    "prepublish": "npm run build && npm test",
-    "eslint": "eslint ./src/ && eslint ./bin/regexp-tree"
+    "demo:bundle": "node ./scripts/bundle-demo.js demo/regexp-tree.browser.js",
+    "verify:demo": "node ./scripts/verify-demo.js",
+    "eslint": "eslint ./src/ && eslint ./bin/regexp-tree",
+    "prepublishOnly": "npm run build && npm test",
+    "smoke": "node ./scripts/smoke-dist.js"
   },
   "bin": {
-    "regexp-tree": "./bin/regexp-tree"
+    "regexp-tree": "./bin/regexp-tree",
+    "backtrack-ledger": "./bin/backtrack-ledger"
   },
   "keywords": [
     "regexp",
+    "redos",
+    "backtracking",
+    "catastrophic-backtracking",
     "parser",
     "AST",
-    "tree",
-    "JavaScript",
-    "ECMAScript"
+    "JavaScript"
   ],
   "author": "Dmitry Soshnikov",
+  "contributors": [
+    "backtrack-ledger layer"
+  ],
+  "files": [
+    "src",
+    "bin",
+    "dist",
+    "demo",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "1.6.1",
