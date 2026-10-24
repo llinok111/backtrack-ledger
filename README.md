@@ -1,5 +1,10 @@
 # backtrack-ledger
 
+[![test](https://github.com/llinok111/backtrack-ledger/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/llinok111/backtrack-ledger/actions/workflows/test.yml)
+[![pages](https://github.com/llinok111/backtrack-ledger/actions/workflows/pages.yml/badge.svg?branch=master)](https://github.com/llinok111/backtrack-ledger/actions/workflows/pages.yml)
+
+**Live workbench:** https://llinok111.github.io/backtrack-ledger/
+
 Measure what a regular expression actually costs a backtracking engine, construct the
 input that makes it worse, and check whether a rewrite is safe — with numbers you can
 reproduce.
